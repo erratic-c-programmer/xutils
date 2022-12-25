@@ -6,10 +6,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#define die(fmt, ...) do { printf(fmt, __VA_ARGS__); exit(1); } while (0)
-#define dienz(x, fmt, ...) do { if (!x) { printf(fmt, __VA_ARGS__); exit(1); } } while (0);
-#define max(x, y) ((x) > (y) ? (x) : (y))
+#include "util.h"
 
 int strcmp_vp(const void *s1, const void *s2)
 {
@@ -27,7 +24,7 @@ int main(int argc, char **argv)
     // Set behavioural flags
     bool show_all = false;
     size_t max_cols = 80;
-    size_t tbl_sep = 2;
+    int tbl_sep = 2;
 
     // Get dir entries
     struct dirent *ent;
@@ -38,13 +35,12 @@ int main(int argc, char **argv)
             continue;
         n_ents++;
     }
-    char **ents = malloc(n_ents * sizeof(*ents));
+    char **ents = malloc_s(n_ents * sizeof(*ents));
     for (size_t i = 0; i < n_ents; i++)
-        ents[i] = calloc(256, sizeof(*ents[i]));
+        ents[i] = calloc_s(256, sizeof(*ents[i]));
 
     // Second time to push into array
     rewinddir(dir);
-    ent = readdir(dir);
     {
         size_t i = 0;
         while ((ent = readdir(dir))) {
@@ -59,33 +55,66 @@ int main(int argc, char **argv)
     qsort(ents, n_ents, sizeof(*ents), strcmp_vp);
 
     // Formatting algo
-    int *entname_lens = malloc(n_ents * sizeof(*entname_lens));
+    int *entname_lens = malloc_s(n_ents * sizeof(*entname_lens));
     for (size_t i = 0; i < n_ents; i++)
 		entname_lens[i] = strlen(ents[i]);
 
 	ssize_t opt_c = -1;
-	size_t *opt_c_conf = malloc(n_ents * sizeof(*opt_c_conf));
-	// we want to try with c columns per row
+	ssize_t opt_r = INT_MAX;
+	size_t *opt_c_conf = malloc_s(n_ents * sizeof(*opt_c_conf));
+	// we want to try with c cells per row
 	for (size_t c = 1; c <= n_ents; c++) {
-		size_t *maxs = calloc(c, sizeof(*maxs));
+		int r = n_ents / c + (n_ents % c != 0);
+		size_t *maxs = calloc_s(n_ents, sizeof(*maxs));
 		for (size_t i = 0; i < c; i++)
-			for (size_t j = i; j < n_ents; j += c)
-				maxs[i] = max(maxs[i], entname_lens[j]);
+			for (size_t j = i * r; j < (i + 1) * r; j++)
+				if (j < n_ents)
+					maxs[i] = max(maxs[i], entname_lens[j]);
+
 		size_t tablen_c = 0;
-		for (size_t i = 0; i < c; i++)
+		for (size_t i = 0; i < n_ents; i++)
 			tablen_c += maxs[i];
-		printf("table length with c=%lu is %lu\n", c, tablen_c);
-		if (tablen_c + (c - 1) * tbl_sep <= max_cols) {
+
+		if (tablen_c + (c - 1) * tbl_sep <= max_cols && r < opt_r) {
+			// We want smallest c minimising number of rows
 			opt_c = c;
-			memset(opt_c_conf, 0, c * sizeof(*opt_c_conf));
-			memcpy(opt_c_conf, maxs, c * sizeof(*maxs));
+			opt_r = r;
+			memcpy(opt_c_conf, maxs, n_ents * sizeof(*maxs));
+		}
+
+		free(maxs);
+	}
+
+	// Create table for printing
+	char ***tbl = calloc_s(opt_r, sizeof(*tbl));
+	for (size_t i = 0; i < opt_r; i++)
+		tbl[i] = calloc(opt_c, sizeof(*tbl[i]));
+	
+	{
+		int k = 0;
+		for (size_t i = 0; i < opt_c; i++)
+			for (size_t j = 0; j < opt_r; j++)
+				if (k < n_ents)
+					tbl[j][i] = ents[k++];
+	}
+
+	// Print the table
+	for (int i = 0; i < opt_r; i++) {
+		for (int j = 0; j < opt_c; j++) {
+			if (tbl[i][j])
+				printf("%s", tbl[i][j]);
+			if (j == opt_c - 1)
+				printf("\n");
+			else
+				for (int k = 0; k < opt_c_conf[j] - strlen(tbl[i][j]) + tbl_sep; k++)
+					printf(" ");
 		}
 	}
-        
-    for (size_t i = 0; i < n_ents; i++)
-        printf("%s\n", ents[i]);
 
-	printf("%ld\n", opt_c);
+	// Free resources
+	for (size_t i = 0; i < opt_r; i++)
+		free(tbl[i]);
+	free(tbl);
 
     for (int i = 0; i < n_ents; i++)
         free(ents[i]);
