@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include "util.h"
@@ -25,8 +26,12 @@ int main(int argc, char **argv)
 
     // Set behavioural flags
     bool show_all = false;
-    size_t max_cols = 130;
     int tbl_sep = 2;
+    size_t max_cols;
+
+	struct winsize ws;
+    ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws);
+	max_cols = ws.ws_col;
 
 	/* FS IO */
 
@@ -60,13 +65,21 @@ int main(int argc, char **argv)
 
 	/* FORMATTING ALGO */
 
-    int *entname_lens = malloc_s(n_ents * sizeof(*entname_lens));
+    size_t *entname_lens = malloc_s(n_ents * sizeof(*entname_lens));
     for (size_t i = 0; i < n_ents; i++)
 		entname_lens[i] = strlen(ents[i]);
-	struct Segtree *len_st;
-	segtree_init(&len_st, 0, n_ents + 1);
-	for (int i = 0; i < n_ents; i++)
-		segtree_update(len_st, i, entname_lens[i]);
+
+	// Oh shit oh frick it's a sparse table
+	size_t sptK = sizeof(size_t) * 8 - 1;
+	size_t **sptbl = calloc(sptK + 1, sizeof(*sptbl));
+	for (int i = 0; i < sptK + 1; i++)
+		sptbl[i] = calloc(n_ents * 1, sizeof(*sptbl[i]));
+	memcpy(sptbl[0], entname_lens, n_ents * sizeof(*entname_lens));
+	for (int i = 1; i <= sptK; i++)
+		for (int j = 0; j + (1UL << i) <= n_ents; j++)
+			sptbl[i][j] = max(sptbl[i - 1][j], sptbl[i - 1][j + (1UL << (i - 1))]);
+
+	// Brute-force optimal rows and cols
 
 	ssize_t opt_c = -1;
 	ssize_t opt_r = INT_MAX;
@@ -75,8 +88,10 @@ int main(int argc, char **argv)
 	for (size_t c = 1; c <= n_ents; c++) {
 		int r = n_ents / c + (n_ents % c != 0);
 		size_t *maxs = calloc_s(n_ents, sizeof(*maxs));
-		for (size_t i = 0; i < c; i++)
-			maxs[i] = segtree_query(len_st, i * r, (i + 1) * r - 1);
+		for (size_t i = 0; i < c; i++) {
+			int p = log2_floor(r);
+			maxs[i] = max(sptbl[p][i * r], sptbl[p][(i + 1) * r - (1UL << p)]);
+		}
 
 		size_t tablen_c = 0;
 		for (size_t i = 0; i < n_ents; i++)
@@ -91,7 +106,6 @@ int main(int argc, char **argv)
 
 		free(maxs);
 	}
-	segtree_free(len_st);
 
 	// Create table for printing
 	char ***tbl = calloc_s(opt_r, sizeof(*tbl));

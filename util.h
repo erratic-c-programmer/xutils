@@ -11,6 +11,7 @@
 #define max(x, y) ((x) > (y) ? (x) : (y))
 
 /* CHECKING MEMORY MANAGEMENT */
+
 void *malloc_s(size_t sz)
 {
     void *ptr = malloc(sz);
@@ -35,7 +36,15 @@ void *realloc_s(void *ptr, size_t sz)
     return rptr;
 }
 
+/* MISC */
+
+int log2_floor(unsigned long i)
+{
+    return i ? __builtin_clzl(1) - __builtin_clzl(i) : -1;
+}
+
 /* SEGMENT TREE */
+
 // TODO: generalise
 // Currently this is a point-add range-max segtree, no laziness
 #define ST_V_T size_t
