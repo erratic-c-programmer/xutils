@@ -74,28 +74,28 @@ int main(int argc, char **argv)
 	ssize_t opt_c = 1;
 	ssize_t opt_r = n_ents;
 	size_t *opt_c_conf = malloc_s(n_ents * sizeof(*opt_c_conf));
-	// we want to try with c cells per row
+	// We want to try with c cells per row
 	for (size_t c = 1; c <= n_ents; c++) {
 		int r = n_ents / c + (n_ents % c != 0);
-		size_t *maxs = calloc_s(n_ents, sizeof(*maxs));
-		for (size_t i = 0; i < c; i++) 
-			for (size_t j = i * r; j < (i + 1) * r; j++)
-				if (j < n_ents)
-					maxs[i] = max(maxs[i], entname_lens[j]);
-
 		size_t tablen_c = 0;
-		for (size_t i = 0; i < n_ents; i++)
-			tablen_c += maxs[i];
+		for (size_t i = 0; i < c; i++) {
+			size_t mx = 0;
+			for (size_t j = i * r; j < min(n_ents, (i + 1) * r); j++)
+				mx = max(mx, entname_lens[j]);
+			tablen_c += mx;
+		}
 
 		if (tablen_c + (c - 1) * tbl_sep <= max_cols && r < opt_r) {
 			// We want smallest c minimising number of rows
 			opt_c = c;
 			opt_r = r;
-			memcpy(opt_c_conf, maxs, n_ents * sizeof(*maxs));
 		}
-
-		free(maxs);
 	}
+
+	// Find the desired column widths
+	for (size_t i = 0; i < opt_c; i++)
+		for (size_t j = i * opt_r; j < min(n_ents, (i + 1) * opt_r); j++)
+			opt_c_conf[i] = max(opt_c_conf[i], entname_lens[j]);
 
 	/* OUTPUT */
 
@@ -107,9 +107,8 @@ int main(int argc, char **argv)
 	{
 		int k = 0;
 		for (size_t i = 0; i < opt_c; i++)
-			for (size_t j = 0; j < opt_r; j++)
-				if (k < n_ents)
-					tbl[j][i] = ents[k++];
+			for (size_t j = 0; j < opt_r && k < n_ents; j++)
+				tbl[j][i] = ents[k++];
 	}
 
 	// Print the table
