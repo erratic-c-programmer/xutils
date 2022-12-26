@@ -75,8 +75,7 @@ void segtree_update(struct Segtree *st, long long pt, ST_V_T x)
 // inclusive range
 ST_V_T segtree_query(struct Segtree *st, long long s, long long e)
 {
-    printf("s=%lld,e=%lld,m=%lld\n",s,e,st->mid);
-    if (st->start == s && st->end == e)
+    if (st->start == st->end || (st->start == s && st->end == e))
         return st->val;
     else if (e <= st->mid)
         return segtree_query(st->l_child, s, e);
@@ -84,6 +83,15 @@ ST_V_T segtree_query(struct Segtree *st, long long s, long long e)
         return segtree_query(st->r_child, s, e);
     else
         return max(segtree_query(st->l_child, s, st->mid), segtree_query(st->r_child, st->mid + 1, e));
+}
+
+void segtree_free(struct Segtree *st)
+{
+    if (st->start != st->end) {
+        segtree_free(st->l_child);
+        segtree_free(st->r_child);
+    }
+    free(st);
 }
 
 #endif

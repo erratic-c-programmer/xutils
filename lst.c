@@ -77,11 +77,6 @@ int main(int argc, char **argv)
 		size_t *maxs = calloc_s(n_ents, sizeof(*maxs));
 		for (size_t i = 0; i < c; i++)
 			maxs[i] = segtree_query(len_st, i * r, (i + 1) * r - 1);
-				/*
-			for (size_t j = i * r; j < (i + 1) * r; j++)
-				if (j < n_ents)
-					maxs[i] = max(maxs[i], entname_lens[j]);
-					*/
 
 		size_t tablen_c = 0;
 		for (size_t i = 0; i < n_ents; i++)
@@ -96,6 +91,7 @@ int main(int argc, char **argv)
 
 		free(maxs);
 	}
+	segtree_free(len_st);
 
 	// Create table for printing
 	char ***tbl = calloc_s(opt_r, sizeof(*tbl));
@@ -111,7 +107,6 @@ int main(int argc, char **argv)
 	}
 
 	// Print the table
-	/*
 	for (int i = 0; i < opt_r; i++) {
 		for (int j = 0; j < opt_c; j++) {
 			if (tbl[i][j])
@@ -123,7 +118,6 @@ int main(int argc, char **argv)
 					printf(" ");
 		}
 	}
-	*/
 
 	// Free resources
 	for (size_t i = 0; i < opt_r; i++)
