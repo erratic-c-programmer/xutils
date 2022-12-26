@@ -69,17 +69,6 @@ int main(int argc, char **argv)
     for (size_t i = 0; i < n_ents; i++)
 		entname_lens[i] = strlen(ents[i]);
 
-	// Oh shit oh frick it's a sparse table
-	// ...way too long later I realise this only offers x2 speedup ;-;
-	size_t sptK = sizeof(size_t) * 8 - 1;
-	size_t **sptbl = calloc(sptK + 1, sizeof(*sptbl));
-	for (int i = 0; i < sptK + 1; i++)
-		sptbl[i] = calloc(n_ents * 1, sizeof(*sptbl[i]));
-	memcpy(sptbl[0], entname_lens, n_ents * sizeof(*entname_lens));
-	for (int i = 1; i <= sptK; i++)
-		for (int j = 0; j + (1UL << i) <= n_ents; j++)
-			sptbl[i][j] = max(sptbl[i - 1][j], sptbl[i - 1][j + (1UL << (i - 1))]);
-
 	// Brute-force optimal rows and cols
 
 	ssize_t opt_c = 1;

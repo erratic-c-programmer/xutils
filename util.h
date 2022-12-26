@@ -9,6 +9,7 @@
 #define die(fmt, ...) do { printf(fmt, __VA_ARGS__); exit(1); } while (0)
 #define dienz(x, fmt, ...) do { if (!x) { printf(fmt, __VA_ARGS__); exit(1); } } while (0);
 #define max(x, y) ((x) > (y) ? (x) : (y))
+#define min(x, y) ((x) < (y) ? (x) : (y))
 
 /* CHECKING MEMORY MANAGEMENT */
 
