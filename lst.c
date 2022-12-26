@@ -89,11 +89,10 @@ int main(int argc, char **argv)
 	for (size_t c = 1; c <= n_ents; c++) {
 		int r = n_ents / c + (n_ents % c != 0);
 		size_t *maxs = calloc_s(n_ents, sizeof(*maxs));
-		for (size_t i = 0; i < c; i++) {
-			int p = log2_floor(r);
-			// For each column get max in range [i*r, (i+1)*r]
-			maxs[i] = max(sptbl[p][i * r], sptbl[p][(i + 1) * r - (1UL << p)]);
-		}
+		for (size_t i = 0; i < c; i++) 
+			for (size_t j = i * r; j < (i + 1) * r; j++)
+				if (j < n_ents)
+					maxs[i] = max(maxs[i], entname_lens[j]);
 
 		size_t tablen_c = 0;
 		for (size_t i = 0; i < n_ents; i++)
