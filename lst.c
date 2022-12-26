@@ -81,8 +81,8 @@ int main(int argc, char **argv)
 
 	// Brute-force optimal rows and cols
 
-	ssize_t opt_c = -1;
-	ssize_t opt_r = INT_MAX;
+	ssize_t opt_c = 1;
+	ssize_t opt_r = n_ents;
 	size_t *opt_c_conf = malloc_s(n_ents * sizeof(*opt_c_conf));
 	// we want to try with c cells per row
 	for (size_t c = 1; c <= n_ents; c++) {
@@ -107,11 +107,13 @@ int main(int argc, char **argv)
 		free(maxs);
 	}
 
+	/* OUTPUT */
+
 	// Create table for printing
 	char ***tbl = calloc_s(opt_r, sizeof(*tbl));
 	for (size_t i = 0; i < opt_r; i++)
 		tbl[i] = calloc(opt_c, sizeof(*tbl[i]));
-	
+
 	{
 		int k = 0;
 		for (size_t i = 0; i < opt_c; i++)
@@ -133,10 +135,11 @@ int main(int argc, char **argv)
 		}
 	}
 
-	// Free resources
 	for (size_t i = 0; i < opt_r; i++)
 		free(tbl[i]);
 	free(tbl);
+
+	/* RELEASE REMAINING RESOURCES */
 
     for (int i = 0; i < n_ents; i++)
         free(ents[i]);

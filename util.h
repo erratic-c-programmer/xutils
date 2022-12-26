@@ -40,7 +40,7 @@ void *realloc_s(void *ptr, size_t sz)
 
 int log2_floor(unsigned long i)
 {
-    return i ? __builtin_clzl(1) - __builtin_clzl(i) : -1;
+    return i ? __builtin_clzl(1UL) - __builtin_clzl(i) : -1;
 }
 
 /* SEGMENT TREE */
