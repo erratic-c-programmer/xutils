@@ -70,6 +70,7 @@ int main(int argc, char **argv)
 		entname_lens[i] = strlen(ents[i]);
 
 	// Oh shit oh frick it's a sparse table
+	// ...way too long later I realise this only offers x2 speedup ;-;
 	size_t sptK = sizeof(size_t) * 8 - 1;
 	size_t **sptbl = calloc(sptK + 1, sizeof(*sptbl));
 	for (int i = 0; i < sptK + 1; i++)
@@ -90,6 +91,7 @@ int main(int argc, char **argv)
 		size_t *maxs = calloc_s(n_ents, sizeof(*maxs));
 		for (size_t i = 0; i < c; i++) {
 			int p = log2_floor(r);
+			// For each column get max in range [i*r, (i+1)*r]
 			maxs[i] = max(sptbl[p][i * r], sptbl[p][(i + 1) * r - (1UL << p)]);
 		}
 
