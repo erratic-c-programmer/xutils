@@ -15,6 +15,8 @@ int strcmp_vp(const void *s1, const void *s2)
 
 int main(int argc, char **argv)
 {
+	/* INIT */
+
     if (argc == 1)
         die("Usage: %s <dirname>\n", argv[0]);
 
@@ -23,8 +25,10 @@ int main(int argc, char **argv)
 
     // Set behavioural flags
     bool show_all = false;
-    size_t max_cols = 80;
+    size_t max_cols = 130;
     int tbl_sep = 2;
+
+	/* FS IO */
 
     // Get dir entries
     struct dirent *ent;
@@ -54,10 +58,15 @@ int main(int argc, char **argv)
     // Sort entries in alphabetical order
     qsort(ents, n_ents, sizeof(*ents), strcmp_vp);
 
-    // Formatting algo
+	/* FORMATTING ALGO */
+
     int *entname_lens = malloc_s(n_ents * sizeof(*entname_lens));
     for (size_t i = 0; i < n_ents; i++)
 		entname_lens[i] = strlen(ents[i]);
+	struct Segtree *len_st;
+	segtree_init(&len_st, 0, n_ents + 1);
+	for (int i = 0; i < n_ents; i++)
+		segtree_update(len_st, i, entname_lens[i]);
 
 	ssize_t opt_c = -1;
 	ssize_t opt_r = INT_MAX;
@@ -67,9 +76,12 @@ int main(int argc, char **argv)
 		int r = n_ents / c + (n_ents % c != 0);
 		size_t *maxs = calloc_s(n_ents, sizeof(*maxs));
 		for (size_t i = 0; i < c; i++)
+			maxs[i] = segtree_query(len_st, i * r, (i + 1) * r - 1);
+				/*
 			for (size_t j = i * r; j < (i + 1) * r; j++)
 				if (j < n_ents)
 					maxs[i] = max(maxs[i], entname_lens[j]);
+					*/
 
 		size_t tablen_c = 0;
 		for (size_t i = 0; i < n_ents; i++)
@@ -99,6 +111,7 @@ int main(int argc, char **argv)
 	}
 
 	// Print the table
+	/*
 	for (int i = 0; i < opt_r; i++) {
 		for (int j = 0; j < opt_c; j++) {
 			if (tbl[i][j])
@@ -110,6 +123,7 @@ int main(int argc, char **argv)
 					printf(" ");
 		}
 	}
+	*/
 
 	// Free resources
 	for (size_t i = 0; i < opt_r; i++)
