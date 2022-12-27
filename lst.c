@@ -73,7 +73,7 @@ int main(int argc, char **argv)
 
 	ssize_t opt_c = 1;
 	ssize_t opt_r = n_ents;
-	size_t *opt_c_conf = malloc_s(n_ents * sizeof(*opt_c_conf));
+	size_t *opt_c_conf = calloc_s(n_ents, sizeof(*opt_c_conf));
 	// We want to try with c cells per row
 	for (size_t c = 1; c <= n_ents; c++) {
 		int r = n_ents / c + (n_ents % c != 0);
