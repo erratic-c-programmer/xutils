@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/ioctl.h>
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include "util.h"
@@ -114,13 +115,28 @@ int main(int argc, char **argv)
 	// Print the table
 	for (int i = 0; i < opt_r; i++) {
 		for (int j = 0; j < opt_c; j++) {
-			if (tbl[i][j])
-				printf("%s", tbl[i][j]);
-			if (j == opt_c - 1)
+			if (tbl[i][j]) {
+				struct stat statbuf;
+				char *fullpath = malloc(strlen(argv[1]) + strlen(tbl[i][j]) + 1);
+				size_t argv1len = strlen(argv[1]);
+				strcpy(fullpath, argv[1]);
+				fullpath[argv1len] = '/';
+				strcpy(fullpath + argv1len + 1, tbl[i][j]);
+				if (lstat(fullpath, &statbuf) == -1)
+					;
+				else if (S_ISDIR(statbuf.st_mode))
+					printf("%s", TERM_BOLD TERM_BLUE);
+				else if (S_ISLNK(statbuf.st_mode))
+					printf("%s", TERM_BOLD TERM_CYAN);
+				free(fullpath);
+					
+				printf("%s%s", tbl[i][j], TERM_COLRESET);
+			} if (j == opt_c - 1) {
 				printf("\n");
-			else
+			} else {
 				for (int k = 0; k < opt_c_conf[j] - strlen(tbl[i][j]) + tbl_sep; k++)
 					printf(" ");
+			}
 		}
 	}
 

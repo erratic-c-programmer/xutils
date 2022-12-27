@@ -11,6 +11,16 @@
 #define max(x, y) ((x) > (y) ? (x) : (y))
 #define min(x, y) ((x) < (y) ? (x) : (y))
 
+/* COLOURS */
+#define ESC "\033"
+#define TERM_RED ESC"[31m"
+#define TERM_GREEN ESC"[32m"
+#define TERM_BLUE ESC"[34m"
+#define TERM_CYAN ESC"[36m"
+#define TERM_COLRESET ESC"[0m"
+#define TERM_BOLD ESC"[1m"
+#define TERM_BOLD_RESET ESC"[22m"
+
 /* CHECKING MEMORY MANAGEMENT */
 
 void *malloc_s(size_t sz)
